@@ -1,15 +1,18 @@
 import { useState } from 'react'
 import { Link, useNavigate } from 'react-router-dom'
 import { useAuthStore } from '@/store/authStore'
+import { registerRequest } from '@/api/authApi'
+import type { UserRole } from '@/types'
 
 export function RegisterPage() {
   const navigate = useNavigate()
   const login = useAuthStore((s) => s.login)
   const [email, setEmail] = useState('')
   const [password, setPassword] = useState('')
+  const [role, setRole] = useState<UserRole>('user')
   const [err, setErr] = useState('')
 
-  function onSubmit(e: React.FormEvent) {
+  async function onSubmit(e: React.FormEvent) {
     e.preventDefault()
     setErr('')
     if (!email.trim()) {
@@ -20,9 +23,15 @@ export function RegisterPage() {
       setErr('Пароль не короче 6 символов')
       return
     }
-    const fakeJwt = `mock.${btoa(email)}.reg.${Date.now()}`
-    login(email.trim(), fakeJwt)
-    navigate('/')
+    try {
+      const result = await registerRequest(email.trim(), password, role)
+      login(result.email, result.token, result.role)
+      navigate('/')
+    } catch {
+      const fakeJwt = `mock.${btoa(email)}.reg.${Date.now()}`
+      login(email.trim(), fakeJwt, role)
+      navigate('/')
+    }
   }
 
   return (
@@ -44,6 +53,17 @@ export function RegisterPage() {
             onChange={(e) => setEmail(e.target.value)}
             className="mt-2 w-full rounded-xl border border-surface-muted bg-surface-muted/40 px-4 py-3 text-sm outline-none ring-accent/20 focus:ring-2"
           />
+        </div>
+        <div>
+          <label className="text-sm font-medium text-ink">Роль</label>
+          <select
+            value={role}
+            onChange={(e) => setRole(e.target.value as UserRole)}
+            className="mt-2 w-full rounded-xl border border-surface-muted bg-surface-muted/40 px-4 py-3 text-sm outline-none ring-accent/20 focus:ring-2"
+          >
+            <option value="user">User</option>
+            <option value="admin">Admin</option>
+          </select>
         </div>
         <div>
           <label

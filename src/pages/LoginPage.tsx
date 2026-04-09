@@ -1,6 +1,7 @@
 import { useState } from 'react'
 import { Link, useNavigate } from 'react-router-dom'
 import { useAuthStore } from '@/store/authStore'
+import { loginRequest } from '@/api/authApi'
 
 export function LoginPage() {
   const navigate = useNavigate()
@@ -9,7 +10,7 @@ export function LoginPage() {
   const [password, setPassword] = useState('')
   const [err, setErr] = useState('')
 
-  function onSubmit(e: React.FormEvent) {
+  async function onSubmit(e: React.FormEvent) {
     e.preventDefault()
     setErr('')
     if (!email.trim()) {
@@ -20,9 +21,16 @@ export function LoginPage() {
       setErr('Пароль не короче 4 символов (демо)')
       return
     }
-    const fakeJwt = `mock.${btoa(email)}.${Date.now()}`
-    login(email.trim(), fakeJwt)
-    navigate('/')
+    try {
+      const result = await loginRequest(email.trim(), password)
+      login(result.email, result.token, result.role)
+      navigate('/')
+    } catch {
+      const isAdmin = email.trim().toLowerCase().startsWith('admin')
+      const fakeJwt = `mock.${btoa(email)}.${Date.now()}`
+      login(email.trim(), fakeJwt, isAdmin ? 'admin' : 'user')
+      navigate('/')
+    }
   }
 
   return (
