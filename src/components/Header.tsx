@@ -4,6 +4,9 @@ import { useCartStore } from '@/store/cartStore'
 import { useWishlistStore } from '@/store/wishlistStore'
 import { useAuthStore } from '@/store/authStore'
 import { useThemeStore } from '@/store/themeStore'
+import { usePreferencesStore } from '@/store/preferencesStore'
+import { t } from '@/i18n/dictionary'
+import type { CurrencyCode, LanguageCode } from '@/types'
 
 const navClass = ({ isActive }: { isActive: boolean }) =>
   `rounded-lg px-3 py-2 text-sm font-medium transition-colors ${
@@ -18,8 +21,9 @@ export function Header() {
   const navigate = useNavigate()
   const cartCount = useCartStore((s) => s.count())
   const wishCount = useWishlistStore((s) => s.ids.length)
-  const { email, logout } = useAuthStore()
+  const { email, logout, role } = useAuthStore()
   const { dark, toggle } = useThemeStore()
+  const { currency, setCurrency, language, setLanguage } = usePreferencesStore()
 
   function onSearch(e: React.FormEvent) {
     e.preventDefault()
@@ -43,19 +47,24 @@ export function Header() {
 
         <nav className="hidden items-center gap-1 md:flex">
           <NavLink to="/" end className={navClass}>
-            Главная
+            {t(language, 'home')}
           </NavLink>
           <NavLink to="/catalog" className={navClass}>
-            Каталог
+            {t(language, 'catalog')}
           </NavLink>
           <NavLink to="/wishlist" className={navClass}>
-            Избранное
+            {t(language, 'wishlist')}
             {wishCount > 0 && (
               <span className="ml-1 rounded-full bg-accent/15 px-1.5 text-xs text-accent">
                 {wishCount}
               </span>
             )}
           </NavLink>
+          {email && (
+            <NavLink to="/add-product" className={navClass}>
+              {t(language, 'addProduct')}
+            </NavLink>
+          )}
         </nav>
 
         <form
@@ -63,18 +72,37 @@ export function Header() {
           className="mx-auto hidden min-w-0 flex-1 max-w-md md:block"
         >
           <label className="sr-only" htmlFor="header-search">
-            Поиск
+            {t(language, 'searchPlaceholder')}
           </label>
           <input
             id="header-search"
             value={q}
             onChange={(e) => setQ(e.target.value)}
-            placeholder="Поиск по названию..."
+            placeholder={t(language, 'searchPlaceholder')}
             className="w-full rounded-full border border-surface-muted bg-surface-muted/60 px-4 py-2 text-sm text-ink placeholder:text-ink-muted outline-none ring-accent/30 transition focus:border-accent focus:ring-2 dark:bg-surface-muted/40"
           />
         </form>
 
         <div className="ml-auto flex items-center gap-1 sm:gap-2">
+          <select
+            value={currency}
+            onChange={(e) => setCurrency(e.target.value as CurrencyCode)}
+            className="hidden rounded-full border border-surface-muted bg-surface px-2 py-1 text-xs text-ink-muted outline-none sm:block"
+            aria-label="Currency"
+          >
+            <option value="RUB">RUB</option>
+            <option value="USD">USD</option>
+            <option value="TJS">TJS</option>
+          </select>
+          <select
+            value={language}
+            onChange={(e) => setLanguage(e.target.value as LanguageCode)}
+            className="hidden rounded-full border border-surface-muted bg-surface px-2 py-1 text-xs text-ink-muted outline-none sm:block"
+            aria-label="Language"
+          >
+            <option value="ru">RU</option>
+            <option value="en">EN</option>
+          </select>
           <button
             type="button"
             onClick={toggle}
@@ -104,14 +132,14 @@ export function Header() {
           {email ? (
             <div className="hidden items-center gap-2 sm:flex">
               <span className="max-w-[120px] truncate text-xs text-ink-muted">
-                {email}
+                {email} ({role ?? 'user'})
               </span>
               <button
                 type="button"
                 onClick={() => logout()}
                 className="rounded-full border border-surface-muted px-3 py-1.5 text-xs font-medium text-ink-muted transition hover:border-accent hover:text-accent"
               >
-                Выйти
+                {t(language, 'logout')}
               </button>
             </div>
           ) : (
@@ -119,7 +147,7 @@ export function Header() {
               to="/login"
               className="hidden rounded-full bg-ink px-4 py-2 text-sm font-medium text-white shadow-sm transition hover:bg-ink/90 active:scale-[0.98] dark:bg-accent dark:text-slate-950 dark:hover:bg-accent-hover sm:inline-flex"
             >
-              Войти
+              {t(language, 'login')}
             </Link>
           )}
 
@@ -141,26 +169,50 @@ export function Header() {
             <input
               value={q}
               onChange={(e) => setQ(e.target.value)}
-              placeholder="Поиск..."
+              placeholder={t(language, 'searchPlaceholder')}
               className="w-full rounded-xl border border-surface-muted bg-surface-muted/50 px-3 py-2 text-sm outline-none ring-accent/20 focus:ring-2"
             />
           </form>
+          <div className="mb-3 flex gap-2">
+            <select
+              value={currency}
+              onChange={(e) => setCurrency(e.target.value as CurrencyCode)}
+              className="rounded-lg border border-surface-muted bg-surface px-2 py-1 text-xs text-ink-muted outline-none"
+            >
+              <option value="RUB">RUB</option>
+              <option value="USD">USD</option>
+              <option value="TJS">TJS</option>
+            </select>
+            <select
+              value={language}
+              onChange={(e) => setLanguage(e.target.value as LanguageCode)}
+              className="rounded-lg border border-surface-muted bg-surface px-2 py-1 text-xs text-ink-muted outline-none"
+            >
+              <option value="ru">RU</option>
+              <option value="en">EN</option>
+            </select>
+          </div>
           <nav className="flex flex-col gap-1">
             <MobileNavLink to="/" onNavigate={() => setOpen(false)}>
-              Главная
+              {t(language, 'home')}
             </MobileNavLink>
             <MobileNavLink to="/catalog" onNavigate={() => setOpen(false)}>
-              Каталог
+              {t(language, 'catalog')}
             </MobileNavLink>
             <MobileNavLink to="/wishlist" onNavigate={() => setOpen(false)}>
-              Избранное ({wishCount})
+              {t(language, 'wishlist')} ({wishCount})
             </MobileNavLink>
             <MobileNavLink to="/cart" onNavigate={() => setOpen(false)}>
-              Корзина ({cartCount})
+              {t(language, 'cart')} ({cartCount})
             </MobileNavLink>
+            {email && (
+              <MobileNavLink to="/add-product" onNavigate={() => setOpen(false)}>
+                {t(language, 'addProduct')}
+              </MobileNavLink>
+            )}
             {!email && (
               <MobileNavLink to="/login" onNavigate={() => setOpen(false)}>
-                Войти
+                {t(language, 'login')}
               </MobileNavLink>
             )}
           </nav>
