@@ -8,6 +8,8 @@ import { WishlistPage } from '@/pages/WishlistPage'
 import { LoginPage } from '@/pages/LoginPage'
 import { RegisterPage } from '@/pages/RegisterPage'
 import { NotFoundPage } from '@/pages/NotFoundPage'
+import { AddProductPage } from '@/pages/AddProductPage'
+import { RequireAuth } from '@/components/RequireAuth'
 
 export default function App() {
   return (
@@ -18,6 +20,14 @@ export default function App() {
         <Route path="product/:slug" element={<ProductPage />} />
         <Route path="cart" element={<CartPage />} />
         <Route path="wishlist" element={<WishlistPage />} />
+        <Route
+          path="add-product"
+          element={
+            <RequireAuth>
+              <AddProductPage />
+            </RequireAuth>
+          }
+        />
         <Route path="login" element={<LoginPage />} />
         <Route path="register" element={<RegisterPage />} />
         <Route path="*" element={<NotFoundPage />} />

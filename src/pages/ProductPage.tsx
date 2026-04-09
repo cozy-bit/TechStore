@@ -5,12 +5,19 @@ import type { Product } from '@/types'
 import { formatPrice } from '@/utils/priceFormat'
 import { useCartStore } from '@/store/cartStore'
 import { useWishlistStore } from '@/store/wishlistStore'
+import { usePreferencesStore } from '@/store/preferencesStore'
+import { useAuthStore } from '@/store/authStore'
+import { deleteProductRequest, updateProductRequest } from '@/api/productsApi'
 
 export function ProductPage() {
   const { slug } = useParams<{ slug: string }>()
   const [product, setProduct] = useState<Product | null | undefined>(undefined)
   const add = useCartStore((s) => s.add)
   const { toggle, has } = useWishlistStore()
+  const { currency, ratesFromRub, language } = usePreferencesStore()
+  const { role, token } = useAuthStore()
+  const [editPrice, setEditPrice] = useState('')
+  const [editDescription, setEditDescription] = useState('')
   const liked = product ? has(product.id) : false
 
   useEffect(() => {
@@ -54,6 +61,27 @@ export function ProductPage() {
     )
   }
 
+  async function onAdminSave() {
+    if (!token || role !== 'admin') return
+    if (!product.id.startsWith('srv-')) return
+    const updated = await updateProductRequest(
+      product.id,
+      {
+        description: editDescription || product.description,
+        price: Number(editPrice) || product.price,
+      },
+      token
+    )
+    setProduct(updated)
+  }
+
+  async function onAdminDelete() {
+    if (!token || role !== 'admin') return
+    if (!product.id.startsWith('srv-')) return
+    await deleteProductRequest(product.id, token)
+    window.location.href = '/catalog'
+  }
+
   return (
     <div className="mx-auto max-w-6xl px-4 py-8 md:px-6 md:py-10">
       <nav className="text-sm text-ink-muted">
@@ -85,7 +113,7 @@ export function ProductPage() {
             {product.name}
           </h1>
           <p className="mt-6 text-3xl font-semibold text-ink">
-            {formatPrice(product.price, product.currency)}
+            {formatPrice(product.price, currency, ratesFromRub[currency], language)}
           </p>
           <p className="mt-6 leading-relaxed text-ink-muted">{product.description}</p>
           <div className="mt-8 flex flex-wrap gap-3">
@@ -108,6 +136,43 @@ export function ProductPage() {
               {liked ? 'В избранном' : 'В избранное'}
             </button>
           </div>
+          {role === 'admin' && product.id.startsWith('srv-') && (
+            <div className="mt-8 rounded-2xl border border-red-200 bg-red-50/60 p-4 dark:border-red-900/50 dark:bg-red-950/20">
+              <p className="text-sm font-semibold text-red-700 dark:text-red-300">
+                Admin tools
+              </p>
+              <div className="mt-3 grid gap-2 md:grid-cols-2">
+                <input
+                  placeholder="Новая цена"
+                  value={editPrice}
+                  onChange={(e) => setEditPrice(e.target.value)}
+                  className="rounded-lg border border-red-200 bg-white px-3 py-2 text-sm outline-none dark:border-red-900/50 dark:bg-slate-900"
+                />
+                <input
+                  placeholder="Новое описание"
+                  value={editDescription}
+                  onChange={(e) => setEditDescription(e.target.value)}
+                  className="rounded-lg border border-red-200 bg-white px-3 py-2 text-sm outline-none dark:border-red-900/50 dark:bg-slate-900"
+                />
+              </div>
+              <div className="mt-3 flex gap-2">
+                <button
+                  type="button"
+                  onClick={onAdminSave}
+                  className="rounded-full border border-red-400 px-4 py-2 text-sm font-semibold text-red-700"
+                >
+                  Сохранить
+                </button>
+                <button
+                  type="button"
+                  onClick={onAdminDelete}
+                  className="rounded-full bg-red-600 px-4 py-2 text-sm font-semibold text-white"
+                >
+                  Удалить товар
+                </button>
+              </div>
+            </div>
+          )}
         </div>
       </div>
     </div>

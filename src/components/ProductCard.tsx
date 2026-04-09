@@ -2,6 +2,7 @@ import { Link } from 'react-router-dom'
 import type { Product } from '@/types'
 import { formatPrice } from '@/utils/priceFormat'
 import { useWishlistStore } from '@/store/wishlistStore'
+import { usePreferencesStore } from '@/store/preferencesStore'
 
 type Props = {
   product: Product
@@ -11,6 +12,7 @@ type Props = {
 export function ProductCard({ product, style }: Props) {
   const { toggle, has } = useWishlistStore()
   const liked = has(product.id)
+  const { currency, ratesFromRub, language } = usePreferencesStore()
 
   return (
     <article
@@ -49,7 +51,7 @@ export function ProductCard({ product, style }: Props) {
           {product.name}
         </Link>
         <p className="mt-3 text-lg font-semibold tracking-tight text-ink">
-          {formatPrice(product.price, product.currency)}
+          {formatPrice(product.price, currency, ratesFromRub[currency], language)}
         </p>
         <div className="mt-auto flex gap-2 pt-4">
           <Link

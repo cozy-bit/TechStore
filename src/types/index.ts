@@ -16,6 +16,8 @@ export type Product = {
   categoryId: string
   brand: string
   popularity: number
+  status?: 'published' | 'pending'
+  specs?: string
 }
 
 export type CartItem = {
@@ -24,6 +26,10 @@ export type CartItem = {
 }
 
 export type SortOption = 'popular' | 'price-asc' | 'price-desc' | 'name'
+
+export type UserRole = 'user' | 'admin'
+export type CurrencyCode = 'RUB' | 'USD' | 'TJS'
+export type LanguageCode = 'ru' | 'en'
 
 export type ProductFilters = {
   categoryId: string | null

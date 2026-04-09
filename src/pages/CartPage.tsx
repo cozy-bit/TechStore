@@ -1,9 +1,11 @@
 import { Link } from 'react-router-dom'
 import { useCartStore } from '@/store/cartStore'
 import { formatPrice } from '@/utils/priceFormat'
+import { usePreferencesStore } from '@/store/preferencesStore'
 
 export function CartPage() {
   const { items, remove, setQuantity, total } = useCartStore()
+  const { currency, ratesFromRub, language } = usePreferencesStore()
   const rows = Object.values(items)
   const sum = total()
 
@@ -56,7 +58,12 @@ export function CartPage() {
                 </Link>
                 <p className="mt-1 text-sm text-ink-muted">{product.brand}</p>
                 <p className="mt-2 font-medium text-ink">
-                  {formatPrice(product.price, product.currency)}
+                  {formatPrice(
+                    product.price,
+                    currency,
+                    ratesFromRub[currency],
+                    language
+                  )}
                 </p>
                 <div className="mt-3 flex flex-wrap items-center gap-3">
                   <div className="inline-flex items-center rounded-full border border-surface-muted">
@@ -95,7 +102,7 @@ export function CartPage() {
         <aside className="rounded-2xl border border-surface-muted bg-surface-muted/40 p-6">
           <p className="text-sm text-ink-muted">Итого</p>
           <p className="mt-2 text-2xl font-semibold text-ink">
-            {formatPrice(sum, rows[0]?.product.currency ?? 'RUB')}
+            {formatPrice(sum, currency, ratesFromRub[currency], language)}
           </p>
           <button
             type="button"
