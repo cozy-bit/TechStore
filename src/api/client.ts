@@ -1,10 +1,11 @@
 import { mockCategories, mockProducts } from '../data/mockData'
 import type { Category, Product, ProductFilters } from '../types'
+import { axiosClient } from '@/lib/axiosClient'
 
 const delay = (ms: number) => new Promise((r) => setTimeout(r, ms))
 
 function filterAndSortProducts(filters: ProductFilters): Product[] {
-  let list = [...mockProducts]
+  let list = [...mockProducts, ...extraProducts]
 
   if (filters.categoryId) {
     list = list.filter((p) => p.categoryId === filters.categoryId)
@@ -64,6 +65,8 @@ export async function fetchProducts(
   filters: ProductFilters
 ): Promise<PaginatedProducts> {
   await delay(400)
+  const fromServer = await fetchServerProducts()
+  fromServer.forEach(appendRuntimeProduct)
   const all = filterAndSortProducts(filters)
   const total = all.length
   const start = (filters.page - 1) * filters.pageSize
@@ -80,6 +83,30 @@ export async function fetchProducts(
 
 export async function fetchProductById(id: string): Promise<Product | null> {
   await delay(320)
-  const p = mockProducts.find((x) => x.id === id || x.slug === id)
+  let p = [...mockProducts, ...extraProducts].find(
+    (x) => x.id === id || x.slug === id
+  )
+  if (!p) {
+    const fromServer = await fetchServerProducts()
+    fromServer.forEach(appendRuntimeProduct)
+    p = [...mockProducts, ...extraProducts].find((x) => x.id === id || x.slug === id)
+  }
   return p ?? null
+}
+
+let extraProducts: Product[] = []
+
+export function appendRuntimeProduct(product: Product) {
+  if (!extraProducts.find((p) => p.id === product.id)) {
+    extraProducts = [product, ...extraProducts]
+  }
+}
+
+export async function fetchServerProducts(): Promise<Product[]> {
+  try {
+    const res = await axiosClient.get<Product[]>('/products')
+    return res.data
+  } catch {
+    return []
+  }
 }
